@@ -1,0 +1,191 @@
+{
+  "tools_ref": "scripts/getting-started-swift-tool-use/chat_agent.py 内置 DEMO_TOOLS",
+  "usage": {
+    "interactive": "逐条复制 [user] 输入到 chat_agent.py",
+    "batch": "python3 scripts/getting-started-swift-tool-use/run_eval_cases.py"
+  },
+  "cases": [
+    {
+      "id": "single_exchange",
+      "category": "单轮-汇率",
+      "turns": [
+        {"role": "user", "content": "What is the exchange rate from USD to CNY?"}
+      ],
+      "expected": {
+        "must_call_tools": ["get_exchange_rate"],
+        "tool_arguments": [
+          {"name": "get_exchange_rate", "arguments": {"base_currency": "USD", "target_currency": "CNY"}}
+        ],
+        "tool_response_mock": {"base_currency": "USD", "target_currency": "CNY", "rate": 7.24},
+        "final_answer_should_mention": ["7.24", "USD", "CNY"]
+      }
+    },
+    {
+      "id": "single_weather",
+      "category": "单轮-天气",
+      "turns": [
+        {"role": "user", "content": "What's the weather in Shanghai? Use celsius."}
+      ],
+      "expected": {
+        "must_call_tools": ["get_weather"],
+        "tool_arguments": [
+          {"name": "get_weather", "arguments": {"city": "Shanghai", "unit": "celsius"}}
+        ],
+        "tool_response_mock": {"city": "Shanghai", "temperature": 25, "unit": "celsius", "condition": "Sunny"},
+        "final_answer_should_mention": ["Shanghai", "25", "Sunny"]
+      }
+    },
+    {
+      "id": "single_calculate",
+      "category": "单轮-计算",
+      "turns": [
+        {"role": "user", "content": "Please calculate (15 + 25) * 2 for me."}
+      ],
+      "expected": {
+        "must_call_tools": ["calculate"],
+        "tool_arguments": [
+          {"name": "calculate", "arguments": {"expression": "(15 + 25) * 2"}}
+        ],
+        "tool_response_mock": {"expression": "(15 + 25) * 2", "result": 80},
+        "final_answer_should_mention": ["80"]
+      }
+    },
+    {
+      "id": "no_tool_general",
+      "category": "单轮-不应调工具",
+      "turns": [
+        {"role": "user", "content": "Explain what a large language model is in two sentences."}
+      ],
+      "expected": {
+        "must_call_tools": [],
+        "final_answer_should_mention": ["language model"],
+        "final_answer_should_not_contain": ["<tool_call>"]
+      }
+    },
+    {
+      "id": "multi_turn_followup_city",
+      "category": "多轮-指代消解",
+      "turns": [
+        {"role": "user", "content": "What's the weather in Beijing?"},
+        {"role": "user", "content": "How about Shanghai? Is it warmer there?"}
+      ],
+      "expected": {
+        "turn_1": {
+          "must_call_tools": ["get_weather"],
+          "tool_arguments": [{"name": "get_weather", "arguments": {"city": "Beijing"}}],
+          "final_answer_should_mention": ["Beijing"]
+        },
+        "turn_2": {
+          "must_call_tools": ["get_weather"],
+          "tool_arguments": [{"name": "get_weather", "arguments": {"city": "Shanghai"}}],
+          "final_answer_should_mention": ["Shanghai", "Beijing"],
+          "note": "第二轮应理解在对比两城天气，需再次调用 get_weather(Shanghai)"
+        }
+      }
+    },
+    {
+      "id": "multi_turn_currency_then_amount",
+      "category": "多轮-先查汇率再换算",
+      "turns": [
+        {"role": "user", "content": "What's the current USD to CNY exchange rate?"},
+        {"role": "user", "content": "Great. Then how much is 500 USD in CNY?"}
+      ],
+      "expected": {
+        "turn_1": {
+          "must_call_tools": ["get_exchange_rate"],
+          "tool_arguments": [{"name": "get_exchange_rate", "arguments": {"base_currency": "USD", "target_currency": "CNY"}}],
+          "final_answer_should_mention": ["7.24"]
+        },
+        "turn_2": {
+          "acceptable_tools": [
+            ["calculate"],
+            ["get_exchange_rate", "calculate"]
+          ],
+          "final_answer_should_mention": ["3620"],
+          "note": "500 * 7.24 = 3620；可直接 calculate 或先查汇率再算"
+        }
+      }
+    },
+    {
+      "id": "multi_tool_single_turn",
+      "category": "单轮-多工具",
+      "turns": [
+        {"role": "user", "content": "Tell me the weather in Tokyo and the exchange rate from EUR to CNY."}
+      ],
+      "expected": {
+        "must_call_tools": ["get_weather", "get_exchange_rate"],
+        "tool_arguments": [
+          {"name": "get_weather", "arguments": {"city": "Tokyo"}},
+          {"name": "get_exchange_rate", "arguments": {"base_currency": "EUR", "target_currency": "CNY"}}
+        ],
+        "tool_response_mock": [
+          {"city": "Tokyo", "temperature": 25, "condition": "Sunny"},
+          {"base_currency": "EUR", "target_currency": "CNY", "rate": 7.85}
+        ],
+        "final_answer_should_mention": ["Tokyo", "7.85", "EUR", "CNY"]
+      }
+    },
+    {
+      "id": "multi_turn_context_switch",
+      "category": "多轮-话题切换",
+      "turns": [
+        {"role": "user", "content": "Calculate 99 + 1."},
+        {"role": "user", "content": "Now forget that. What's the weather in London?"}
+      ],
+      "expected": {
+        "turn_1": {
+          "must_call_tools": ["calculate"],
+          "final_answer_should_mention": ["100"]
+        },
+        "turn_2": {
+          "must_call_tools": ["get_weather"],
+          "tool_arguments": [{"name": "get_weather", "arguments": {"city": "London"}}],
+          "final_answer_should_mention": ["London"],
+          "note": "应切换到天气查询，不应继续聊上一题计算"
+        }
+      }
+    },
+    {
+      "id": "edge_missing_param",
+      "category": "边界-信息不足",
+      "turns": [
+        {"role": "user", "content": "What's the exchange rate?"}
+      ],
+      "expected": {
+        "acceptable_behaviors": [
+          "追问 base_currency / target_currency",
+          "调用工具时使用合理默认值并在回答中说明"
+        ],
+        "must_call_tools": [],
+        "note": "训练良好的模型应澄清缺少的货币对，而非随意编造汇率"
+      }
+    },
+    {
+      "id": "multi_turn_three_step",
+      "category": "多轮-三步任务",
+      "turns": [
+        {"role": "user", "content": "Hi, I am planning a trip."},
+        {"role": "user", "content": "First, what's the weather in Paris in celsius?"},
+        {"role": "user", "content": "Also convert 200 EUR to CNY for my budget."}
+      ],
+      "expected": {
+        "turn_1": {
+          "must_call_tools": [],
+          "final_answer_should_mention": ["trip", "help"],
+          "note": "寒暄轮通常不调工具"
+        },
+        "turn_2": {
+          "must_call_tools": ["get_weather"],
+          "tool_arguments": [{"name": "get_weather", "arguments": {"city": "Paris", "unit": "celsius"}}],
+          "final_answer_should_mention": ["Paris"]
+        },
+        "turn_3": {
+          "must_call_tools": ["get_exchange_rate"],
+          "tool_arguments": [{"name": "get_exchange_rate", "arguments": {"base_currency": "EUR", "target_currency": "CNY"}}],
+          "final_answer_should_mention": ["7.85", "200", "1570"],
+          "note": "200 * 7.85 = 1570"
+        }
+      }
+    }
+  ]
+}

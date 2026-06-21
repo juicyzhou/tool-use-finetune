@@ -1,0 +1,54 @@
+# ── 预训练模型（含软链接，不入库）──────────────────────────────────────────
+/models/
+models/
+
+# ── 数据（大文件不入库；README 与样本文件入库）──────────────────────────────
+# 原始 Glaive 数据（可选）
+data/glaive-function-calling-v2/*.json
+data/glaive-function-calling-v2/*.jsonl
+!data/glaive-function-calling-v2/README.md
+
+# ms-swift 转换后数据（HuggingFace: hhzhou/glaive-function-calling-v2-ms-swift）
+data/glaive-function-calling-v2-ms-swift/*.json
+data/glaive-function-calling-v2-ms-swift/*.jsonl
+!data/glaive-function-calling-v2-ms-swift/README.md
+!data/glaive-function-calling-v2-ms-swift/glaive-ms-swift-sample-1000.jsonl
+
+data/toolbench-v1/
+
+# ── 训练 / 推理 / 实验产物 ────────────────────────────────────────────────────
+outputs/
+output/
+swanlog/
+*.log
+infer-*.jsonl
+
+# ── 内部草稿与实验脚本 ───────────────────────────────────────────────────────
+skills/
+experiments/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# ── IDE / OS ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── 密钥与环境变量 ───────────────────────────────────────────────────────────
+.env
+.env.*
+*.pem

@@ -1,0 +1,27 @@
+# Core training & inference (ms-swift 4.x)
+ms-swift[llm]>=4.0.1
+deepspeed>=0.14.0
+transformers>=4.48.0
+peft>=0.14.0
+accelerate>=1.0.0
+datasets>=3.0.0
+
+# PyTorch — install separately to match your CUDA version, e.g.:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+# Model download & serving
+huggingface_hub>=0.26.0
+safetensors>=0.4.0
+sentencepiece>=0.2.0
+
+# Logging (optional, local-only SwanLab)
+swanlab>=0.5.0
+
+# Deploy API dependencies (pulled by ms-swift, listed for clarity)
+fastapi>=0.115.0
+uvicorn>=0.30.0
+openai>=1.0.0
+
+# Utilities
+numpy>=1.26.0
+pyyaml>=6.0
