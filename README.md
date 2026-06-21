@@ -158,6 +158,38 @@ make deploy                            # 后台: make deploy ARGS="--background"
 python3 scripts/infer/chat_agent.py --api http://127.0.0.1:8000/v1
 ```
 
+
+**API 调用示例**（需先 `make deploy`）：
+
+```bash
+curl http://127.0.0.1:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+  "model": "qwen3-4b-glaive-tool-use",
+  "messages": [
+    {"role": "user", "content": "What is the weather in Shanghai? Use celsius."}
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Get current weather for a city",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {"type": "string", "description": "City name"},
+            "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+          },
+          "required": ["city"]
+        }
+      }
+    }
+  ],
+  "temperature": 0.1
+}'
+```
+
 ---
 
 ## 配置参考（`scripts/config.sh`）
